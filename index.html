@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Roof Panel Layout Calculator</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 20px; }
+    h1 { margin: 0 0 10px; font-size: 20px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 980px; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 14px; }
+    label { display: block; font-size: 13px; margin: 10px 0 6px; color: #333; }
+    input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    button { padding: 10px 14px; border: 0; border-radius: 10px; cursor: pointer; font-size: 14px; }
+    button.primary { background: #111; color: #fff; }
+    .results { line-height: 1.5; font-size: 14px; }
+    .badge { display:inline-block; padding: 2px 8px; border-radius: 999px; background:#f1f1f1; font-size: 12px; margin-left: 6px; }
+    canvas { width: 100%; height: 320px; border: 1px dashed #ccc; border-radius: 10px; background: #fafafa; }
+    .muted { color:#666; font-size: 12px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <h1>Roof Panel Layout Calculator</h1>
+  <div class="muted">Units: mm (recommended) — just keep roof & panel units consistent.</div>
+
+  <div class="grid" style="margin-top:14px;">
+    <div class="card">
+      <h2 style="margin:0 0 10px;font-size:16px;">Inputs</h2>
+
+      <div class="row">
+        <div>
+          <label>Roof width (W)</label>
+          <input id="roofW" type="number" value="8000" min="0" step="1">
+        </div>
+        <div>
+          <label>Roof height (H)</label>
+          <input id="roofH" type="number" value="5000" min="0" step="1">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Panel width</label>
+          <input id="panelW" type="number" value="1134" min="0" step="1">
+        </div>
+        <div>
+          <label>Panel height</label>
+          <input id="panelH" type="number" value="1722" min="0" step="1">
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Gap between panels (optional)</label>
+          <input id="gap" type="number" value="20" min="0" step="1">
+        </div>
+        <div>
+          <label>Edge clearance / margin (optional)</label>
+          <input id="margin" type="number" value="0" min="0" step="1">
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <button class="primary" id="calcBtn">Calculate</button>
+        <button id="swapBtn" title="Swap roof dimensions (rotate roof)">Swap roof W/H</button>
+      </div>
+
+      <div class="muted" style="margin-top:12px;">
+        “Landscape” = panel width along roof width. “Portrait” = panel height along roof width.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 10px;font-size:16px;">Results</h2>
+      <div class="results" id="results"></div>
+    </div>
+
+    <div class="card" style="grid-column:1 / -1;">
+      <h2 style="margin:0 0 10px;font-size:16px;">Simple layout preview</h2>
+      <div class="muted" style="margin-bottom:10px;">
+        Preview shows the best option found (including the simple “mixed strip fill” heuristic).
+      </div>
+      <canvas id="canvas" width="1200" height="320"></canvas>
+      <div class="muted" style="margin-top:10px;">
+        Note: This is a simple rectangular packing tool (no roof obstacles, setbacks, chimneys, or tilt rules
