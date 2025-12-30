@@ -1,87 +1,632 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Roof Panel Layout Calculator</title>
-  <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 20px; }
-    h1 { margin: 0 0 10px; font-size: 20px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 980px; }
-    .card { border: 1px solid #ddd; border-radius: 10px; padding: 14px; }
-    label { display: block; font-size: 13px; margin: 10px 0 6px; color: #333; }
-    input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    button { padding: 10px 14px; border: 0; border-radius: 10px; cursor: pointer; font-size: 14px; }
-    button.primary { background: #111; color: #fff; }
-    .results { line-height: 1.5; font-size: 14px; }
-    .badge { display:inline-block; padding: 2px 8px; border-radius: 999px; background:#f1f1f1; font-size: 12px; margin-left: 6px; }
-    canvas { width: 100%; height: 320px; border: 1px dashed #ccc; border-radius: 10px; background: #fafafa; }
-    .muted { color:#666; font-size: 12px; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  </style>
-</head>
-<body>
-  <h1>Roof Panel Layout Calculator</h1>
-  <div class="muted">Units: mm (recommended) — just keep roof & panel units consistent.</div>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Roof Panel Fit — steefware-style</title>
 
-  <div class="grid" style="margin-top:14px;">
-    <div class="card">
-      <h2 style="margin:0 0 10px;font-size:16px;">Inputs</h2>
+    <script src="https://cdn.tailwindcss.com"></script>
 
-      <div class="row">
-        <div>
-          <label>Roof width (W)</label>
-          <input id="roofW" type="number" value="8000" min="0" step="1">
-        </div>
-        <div>
-          <label>Roof height (H)</label>
-          <input id="roofH" type="number" value="5000" min="0" step="1">
-        </div>
-      </div>
+    <meta
+      name="description"
+      content="Deterministic roof panel fit calculator (landscape/portrait/mixed). Clean, fast, predictable."
+    />
+  </head>
 
-      <div class="row">
-        <div>
-          <label>Panel width</label>
-          <input id="panelW" type="number" value="1134" min="0" step="1">
-        </div>
-        <div>
-          <label>Panel height</label>
-          <input id="panelH" type="number" value="1722" min="0" step="1">
-        </div>
-      </div>
+  <body class="bg-white text-black antialiased">
+    <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+      <!-- Header -->
+      <header class="flex items-center justify-between py-6">
+        <a
+          href="#"
+          class="inline-flex items-center gap-2 rounded-xl border-2 border-black px-3 py-2 text-sm font-black tracking-tight shadow-[4px_4px_0_0_#000] transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:translate-x-0.5 focus:outline-none focus-visible:ring-4 focus-visible:ring-black focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+          aria-label="steefware home"
+        >
+          <span class="inline-block h-2 w-2 rounded-full bg-fuchsia-500"></span>
+          steefware.com
+        </a>
 
-      <div class="row">
-        <div>
-          <label>Gap between panels (optional)</label>
-          <input id="gap" type="number" value="20" min="0" step="1">
-        </div>
-        <div>
-          <label>Edge clearance / margin (optional)</label>
-          <input id="margin" type="number" value="0" min="0" step="1">
-        </div>
-      </div>
+        <nav class="flex items-center gap-3 text-sm font-semibold">
+          <a
+            href="#tool"
+            class="rounded-lg px-2 py-1 underline underline-offset-4 decoration-2 decoration-black/30 transition-colors duration-150 hover:decoration-black focus:outline-none focus-visible:ring-4 focus-visible:ring-black focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+            >app</a
+          >
+          <a
+            href="#about"
+            class="rounded-lg px-2 py-1 underline underline-offset-4 decoration-2 decoration-black/30 transition-colors duration-150 hover:decoration-black focus:outline-none focus-visible:ring-4 focus-visible:ring-black focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+            >about</a
+          >
+        </nav>
+      </header>
 
-      <div style="display:flex; gap:10px; margin-top:14px;">
-        <button class="primary" id="calcBtn">Calculate</button>
-        <button id="swapBtn" title="Swap roof dimensions (rotate roof)">Swap roof W/H</button>
-      </div>
+      <!-- Hero -->
+      <main class="pb-14 pt-2">
+        <section class="relative">
+          <div class="rounded-3xl border-2 border-black p-6 shadow-[8px_8px_0_0_#000] sm:p-10">
+            <h1 class="text-balance text-4xl font-black tracking-tight sm:text-6xl">
+              Roof Panel Fit
+            </h1>
 
-      <div class="muted" style="margin-top:12px;">
-        “Landscape” = panel width along roof width. “Portrait” = panel height along roof width.
-      </div>
+            <div class="mt-6 space-y-2 text-base font-semibold sm:text-xl">
+              <p>
+                Deterministic panel packing for a rectangular roof section.
+                Compare <span class="font-black">landscape</span>,
+                <span class="font-black">portrait</span>, and a simple
+                <span class="font-black">mixed</span> strip-fill heuristic.
+              </p>
+              <p class="text-sm sm:text-base">
+                Units are up to you (mm recommended). Keep everything consistent.
+              </p>
+            </div>
+
+            <div
+              class="pointer-events-none absolute -right-2 -top-2 hidden h-10 w-10 rotate-6 rounded-2xl border-2 border-black bg-amber-300 shadow-[4px_4px_0_0_#000] sm:block"
+              aria-hidden="true"
+            ></div>
+          </div>
+        </section>
+
+        <!-- Tool -->
+        <section id="tool" class="mt-12">
+          <div class="flex items-end justify-between gap-4">
+            <h2 class="text-sm font-black uppercase tracking-widest">Tool</h2>
+            <div id="lastRun" class="text-xs font-semibold text-black/60"></div>
+          </div>
+
+          <div class="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+            <!-- Inputs -->
+            <div
+              class="rounded-2xl border-2 border-black bg-white p-6 shadow-[6px_6px_0_0_#000]"
+              aria-label="Inputs"
+            >
+              <div class="flex items-start justify-between gap-4">
+                <h3 class="text-xl font-black tracking-tight">Inputs</h3>
+                <span
+                  class="inline-flex items-center rounded-full border-2 border-black px-3 py-1 text-xs font-black shadow-[3px_3px_0_0_#000]"
+                  title="All dimensions use the same unit"
+                >
+                  Units: consistent
+                </span>
+              </div>
+
+              <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <!-- Roof W -->
+                <div>
+                  <label
+                    for="roofW"
+                    class="block text-xs font-black uppercase tracking-widest"
+                    >Roof width (W)</label
+                  >
+                  <input
+                    id="roofW"
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="1"
+                    value="8000"
+                    class="mt-2 w-full rounded-xl border-2 border-black px-3 py-2 text-sm font-semibold shadow-[3px_3px_0_0_#000] focus:outline-none focus-visible:ring-4 focus-visible:ring-black focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+                  />
+                </div>
+
+                <!-- Roof H -->
+                <div>
+                  <label
+                    for="roofH"
+                    class="block text-xs font-black uppercase tracking-widest"
+                    >Roof height (H)</label
+                  >
+                  <input
+                    id="roofH"
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="1"
+                    value="5000"
+                    class="mt-2 w-full rounded-xl border-2 border-black px-3 py-2 text-sm font-semibold shadow-[3px_3px_0_0_#000] focus:outline-none focus-visible:ring-4 focus-visible:ring-black focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+                  />
+                </div>
+
+                <!-- Panel W -->
+                <div>
+                  <label
+                    for="panelW"
+                    class="block text-xs font-black uppercase tracking-widest"
+                    >Panel width</label
+                  >
+                  <input
+                    id="panelW"
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="1"
+                    value="1134"
+                    class="mt-2 w-full rounded-xl border-2 border-black px-3 py-2 text-sm font-semibold shadow-[3px_3px_0_0_#000] focus:outline-none focus-visible:ring-4 focus-visible:ring-black focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+                  />
+                </div>
+
+                <!-- Panel H -->
+                <div>
+                  <label
+                    for="panelH"
+                    class="block text-xs font-black uppercase tracking-widest"
+                    >Panel height</label
+                  >
+                  <input
+                    id="panelH"
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="1"
+                    value="1722"
+                    class="mt-2 w-full rounded-xl border-2 border-black px-3 py-2 text-sm font-semibold shadow-[3px_3px_0_0_#000] focus:outline-none focus-visible:ring-4 focus-visible:ring-black focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+                  />
+                </div>
+
+                <!-- Gap -->
+                <div>
+                  <label
+                    for="gap"
+                    class="block text-xs font-black uppercase tracking-widest"
+                    >Gap between panels</label
+                  >
+                  <input
+                    id="gap"
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="1"
+                    value="20"
+                    class="mt-2 w-full rounded-xl border-2 border-black px-3 py-2 text-sm font-semibold shadow-[3px_3px_0_0_#000] focus:outline-none focus-visible:ring-4 focus-visible:ring-black focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+                  />
+                </div>
+
+                <!-- Margin -->
+                <div>
+                  <label
+                    for="margin"
+                    class="block text-xs font-black uppercase tracking-widest"
+                    >Edge margin / setback</label
+                  >
+                  <input
+                    id="margin"
+                    type="number"
+                    inputmode="decimal"
+                    min="0"
+                    step="1"
+                    value="0"
+                    class="mt-2 w-full rounded-xl border-2 border-black px-3 py-2 text-sm font-semibold shadow-[3px_3px_0_0_#000] focus:outline-none focus-visible:ring-4 focus-visible:ring-black focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+                  />
+                </div>
+              </div>
+
+              <!-- Buttons -->
+              <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+                <button
+                  id="btnCalc"
+                  class="inline-flex items-center justify-center rounded-xl border-2 border-black bg-black px-4 py-2 text-sm font-black text-white shadow-[4px_4px_0_0_#000] transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:translate-x-0.5 focus:outline-none focus-visible:ring-4 focus-visible:ring-black focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+                  type="button"
+                >
+                  Calculate
+                </button>
+
+                <button
+                  id="btnSwap"
+                  class="inline-flex items-center justify-center rounded-xl border-2 border-black bg-white px-4 py-2 text-sm font-black shadow-[4px_4px_0_0_#000] transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:translate-x-0.5 focus:outline-none focus-visible:ring-4 focus-visible:ring-black focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+                  type="button"
+                  title="Swap roof width and height"
+                >
+                  Swap roof W/H
+                </button>
+              </div>
+
+              <p class="mt-5 text-sm font-semibold text-black/70" id="about">
+                <span class="font-black">Landscape</span> = panel width along roof width.
+                <span class="font-black">Portrait</span> = rotated 90°.
+                <br />
+                Mixed = main grid + fill one leftover strip with rotated panels.
+              </p>
+
+              <div
+                id="bindingError"
+                class="mt-4 hidden rounded-2xl border-2 border-black bg-amber-300 p-4 text-sm font-black shadow-[4px_4px_0_0_#000]"
+              >
+                Binding error: missing required DOM element(s). Check console.
+              </div>
+            </div>
+
+            <!-- Results -->
+            <div
+              class="rounded-2xl border-2 border-black bg-white p-6 shadow-[6px_6px_0_0_#000]"
+              aria-label="Results"
+            >
+              <div class="flex items-start justify-between gap-4">
+                <h3 class="text-xl font-black tracking-tight">Results</h3>
+                <span
+                  id="bestBadge"
+                  class="inline-flex items-center rounded-full border-2 border-black px-3 py-1 text-xs font-black shadow-[3px_3px_0_0_#000]"
+                >
+                  Best: —
+                </span>
+              </div>
+
+              <div id="results" class="mt-5 space-y-4 text-sm font-semibold"></div>
+
+              <div class="mt-6">
+                <div class="h-2 w-16 rounded-full bg-fuchsia-500"></div>
+                <p class="mt-3 text-xs font-semibold text-black/60">
+                  Deterministic rectangle packing for a rectangular roof. No chimneys, no ridges, no obstacles.
+                </p>
+              </div>
+            </div>
+
+            <!-- Preview -->
+            <div class="md:col-span-2">
+              <div class="rounded-2xl border-2 border-black bg-white p-6 shadow-[6px_6px_0_0_#000]">
+                <div class="flex items-start justify-between gap-4">
+                  <h3 class="text-xl font-black tracking-tight">Preview</h3>
+                  <span
+                    class="inline-flex items-center rounded-full border-2 border-black px-3 py-1 text-xs font-black shadow-[3px_3px_0_0_#000]"
+                    title="Outer = roof. Dashed = usable area after margin."
+                  >
+                    Outer / usable
+                  </span>
+                </div>
+
+                <div class="mt-5 rounded-2xl border-2 border-black p-3 shadow-[6px_6px_0_0_#000]">
+                  <canvas
+                    id="canvas"
+                    width="1200"
+                    height="360"
+                    class="block h-72 w-full"
+                    aria-label="Layout preview canvas"
+                  ></canvas>
+                </div>
+
+                <p id="canvasAlt" class="mt-4 text-sm font-semibold text-black/70">
+                  Preview will render here.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
 
-    <div class="card">
-      <h2 style="margin:0 0 10px;font-size:16px;">Results</h2>
-      <div class="results" id="results"></div>
-    </div>
+    <!-- Script at end of body => handlers always bind -->
+    <script>
+      (function () {
+        const $ = (id) => document.getElementById(id);
 
-    <div class="card" style="grid-column:1 / -1;">
-      <h2 style="margin:0 0 10px;font-size:16px;">Simple layout preview</h2>
-      <div class="muted" style="margin-bottom:10px;">
-        Preview shows the best option found (including the simple “mixed strip fill” heuristic).
-      </div>
-      <canvas id="canvas" width="1200" height="320"></canvas>
-      <div class="muted" style="margin-top:10px;">
-        Note: This is a simple rectangular packing tool (no roof obstacles, setbacks, chimneys, or tilt rules
+        // ---- Binding check (prevents "nothing happens") ----
+        const requiredIds = [
+          "roofW","roofH","panelW","panelH","gap","margin",
+          "btnCalc","btnSwap","results","bestBadge","canvas","canvasAlt","lastRun","bindingError"
+        ];
+        const missing = requiredIds.filter((id) => !$(id));
+        if (missing.length) {
+          console.error("Binding error. Missing elements:", missing);
+          const box = $("bindingError");
+          if (box) box.classList.remove("hidden");
+          return; // stop executing, avoids silent failures
+        }
+
+        // ---- Helpers ----
+        function toNum(value) {
+          const n = Number(value);
+          return Number.isFinite(n) ? n : 0;
+        }
+
+        function clampMin0(n) {
+          return n < 0 ? 0 : n;
+        }
+
+        function gridFit(areaW, areaH, rectW, rectH, gap) {
+          if (areaW <= 0 || areaH <= 0 || rectW <= 0 || rectH <= 0) {
+            return { cols: 0, rows: 0, count: 0, usedW: 0, usedH: 0 };
+          }
+          const cols = Math.floor((areaW + gap) / (rectW + gap));
+          const rows = Math.floor((areaH + gap) / (rectH + gap));
+          const safeCols = Math.max(0, cols);
+          const safeRows = Math.max(0, rows);
+          const count = safeCols * safeRows;
+
+          const usedW = safeCols > 0 ? (safeCols * rectW + (safeCols - 1) * gap) : 0;
+          const usedH = safeRows > 0 ? (safeRows * rectH + (safeRows - 1) * gap) : 0;
+
+          return { cols: safeCols, rows: safeRows, count, usedW, usedH };
+        }
+
+        function mixedHeuristic(usableW, usableH, mainW, mainH, gap) {
+          const main = gridFit(usableW, usableH, mainW, mainH, gap);
+          const rotW = mainH;
+          const rotH = mainW;
+
+          // right strip
+          let rightStripW = usableW - main.usedW;
+          if (main.count > 0 && rightStripW > 0) rightStripW -= gap;
+          rightStripW = Math.max(0, rightStripW);
+          const right = gridFit(rightStripW, usableH, rotW, rotH, gap);
+
+          // top strip
+          let topStripH = usableH - main.usedH;
+          if (main.count > 0 && topStripH > 0) topStripH -= gap;
+          topStripH = Math.max(0, topStripH);
+          const top = gridFit(usableW, topStripH, rotW, rotH, gap);
+
+          const useRight = right.count >= top.count;
+          const strip = useRight ? right : top;
+          const stripPlace = useRight ? "right" : "top";
+
+          return {
+            total: main.count + strip.count,
+            main,
+            strip,
+            stripPlace,
+            mainRect: { w: mainW, h: mainH },
+            stripRect: { w: rotW, h: rotH }
+          };
+        }
+
+        function fmt(n) {
+          // Keep it simple and predictable
+          return String(Math.round(n));
+        }
+
+        // ---- Rendering ----
+        function renderResults(model) {
+          const rows = [];
+
+          rows.push(`
+            <div class="rounded-2xl border-2 border-black p-4 shadow-[4px_4px_0_0_#000]">
+              <div class="text-xs font-black uppercase tracking-widest text-black/70">Usable roof (after margin)</div>
+              <div class="mt-1 text-lg font-black tracking-tight">${fmt(model.usableW)} × ${fmt(model.usableH)}</div>
+              <div class="mt-2 text-xs font-semibold text-black/60">
+                Roof: ${fmt(model.roofW)} × ${fmt(model.roofH)} · Margin: ${fmt(model.margin)} · Gap: ${fmt(model.gap)}
+              </div>
+            </div>
+          `);
+
+          rows.push(renderModeCard("Landscape only", model.landscape, "bg-fuchsia-500"));
+          rows.push(renderModeCard("Portrait only", model.portrait, "bg-amber-300"));
+
+          rows.push(renderMixedCard("Mixed (main landscape)", model.mixedFromLandscape));
+          rows.push(renderMixedCard("Mixed (main portrait)", model.mixedFromPortrait));
+
+          $("results").innerHTML = rows.join("");
+
+          $("bestBadge").textContent = `Best: ${model.best.label} (${model.best.count})`;
+          $("canvasAlt").textContent =
+            `Best layout: ${model.best.label}. Total panels: ${model.best.count}. ` +
+            `Usable area: ${fmt(model.usableW)}×${fmt(model.usableH)}.`;
+        }
+
+        function pill(text) {
+          return `
+            <span class="inline-flex items-center rounded-full border-2 border-black px-3 py-1 text-xs font-black shadow-[3px_3px_0_0_#000]">
+              ${text}
+            </span>
+          `;
+        }
+
+        function renderModeCard(title, d, accentClass) {
+          return `
+            <div class="rounded-2xl border-2 border-black bg-white p-4 shadow-[4px_4px_0_0_#000]">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <div class="text-xs font-black uppercase tracking-widest text-black/70">${title}</div>
+                  <div class="mt-1 text-2xl font-black tracking-tight">${d.count}</div>
+                </div>
+                ${pill(`${d.cols} × ${d.rows}`)}
+              </div>
+              <div class="mt-3 h-2 w-16 rounded-full ${accentClass}"></div>
+              <div class="mt-2 text-xs font-semibold text-black/60">
+                Used: ${fmt(d.usedW)} × ${fmt(d.usedH)}
+              </div>
+            </div>
+          `;
+        }
+
+        function renderMixedCard(title, m) {
+          return `
+            <div class="rounded-2xl border-2 border-black bg-white p-4 shadow-[4px_4px_0_0_#000]">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <div class="text-xs font-black uppercase tracking-widest text-black/70">${title}</div>
+                  <div class="mt-1 text-2xl font-black tracking-tight">${m.total}</div>
+                </div>
+                ${pill(`+${m.strip.count} in ${m.stripPlace}`)}
+              </div>
+              <div class="mt-2 text-xs font-semibold text-black/60">
+                Main: ${m.main.count} (${m.main.cols}×${m.main.rows}) · Strip: ${m.strip.count} (${m.strip.cols}×${m.strip.rows})
+              </div>
+            </div>
+          `;
+        }
+
+        function drawPreview(model) {
+          const canvas = $("canvas");
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          const pad = 24;
+          const roofW = Math.max(1, model.roofW);
+          const roofH = Math.max(1, model.roofH);
+
+          const scale = Math.min(
+            (canvas.width - pad * 2) / roofW,
+            (canvas.height - pad * 2) / roofH
+          );
+
+          const x0 = pad;
+          const y0 = pad;
+
+          const rw = roofW * scale;
+          const rh = roofH * scale;
+
+          // Roof outer
+          ctx.lineWidth = 3;
+          ctx.setLineDash([]);
+          ctx.strokeStyle = "#000";
+          ctx.strokeRect(x0, y0, rw, rh);
+
+          // Usable (dashed)
+          const ux = x0 + model.margin * scale;
+          const uy = y0 + model.margin * scale;
+          const uw = model.usableW * scale;
+          const uh = model.usableH * scale;
+
+          ctx.lineWidth = 2;
+          ctx.setLineDash([8, 6]);
+          ctx.strokeStyle = "rgba(0,0,0,0.5)";
+          ctx.strokeRect(ux, uy, uw, uh);
+          ctx.setLineDash([]);
+
+          // Panel drawing helper
+          function drawGrid(originX, originY, areaW, areaH, rectW, rectH, cols, rows, gap) {
+            const rw = rectW * scale;
+            const rh = rectH * scale;
+            const g = gap * scale;
+
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = "#000";
+
+            for (let r = 0; r < rows; r++) {
+              for (let c = 0; c < cols; c++) {
+                const px = originX + c * (rw + g);
+                const py = originY + r * (rh + g);
+                if (px + rw <= originX + areaW + 0.01 && py + rh <= originY + areaH + 0.01) {
+                  ctx.strokeRect(px, py, rw, rh);
+                }
+              }
+            }
+          }
+
+          // Draw best layout
+          const best = model.best;
+          const g = model.gap;
+
+          if (best.kind === "grid") {
+            drawGrid(ux, uy, uw, uh, best.rectW, best.rectH, best.data.cols, best.data.rows, g);
+          } else {
+            // mixed
+            const m = best.data;
+
+            // main
+            drawGrid(ux, uy, uw, uh, m.mainRect.w, m.mainRect.h, m.main.cols, m.main.rows, g);
+
+            // strip
+            if (m.strip.count > 0) {
+              const mainUsedW = m.main.usedW * scale;
+              const mainUsedH = m.main.usedH * scale;
+              const gapPx = g * scale;
+
+              if (m.stripPlace === "right") {
+                const stripX = ux + mainUsedW + (m.main.count > 0 ? gapPx : 0);
+                const stripY = uy;
+                const stripW = (ux + uw) - stripX;
+                const stripH = uh;
+                drawGrid(stripX, stripY, stripW, stripH, m.stripRect.w, m.stripRect.h, m.strip.cols, m.strip.rows, g);
+              } else {
+                const stripX = ux;
+                const stripY = uy + mainUsedH + (m.main.count > 0 ? gapPx : 0);
+                const stripW = uw;
+                const stripH = (uy + uh) - stripY;
+                drawGrid(stripX, stripY, stripW, stripH, m.stripRect.w, m.stripRect.h, m.strip.cols, m.strip.rows, g);
+              }
+            }
+          }
+
+          // Label
+          ctx.font = "16px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
+          ctx.fillStyle = "#000";
+          ctx.fillText(`Best: ${best.label} = ${best.count}`, pad, canvas.height - 10);
+        }
+
+        // ---- Compute model ----
+        function compute() {
+          const roofW = clampMin0(toNum($("roofW").value));
+          const roofH = clampMin0(toNum($("roofH").value));
+          const panelW = clampMin0(toNum($("panelW").value));
+          const panelH = clampMin0(toNum($("panelH").value));
+          const gap = clampMin0(toNum($("gap").value));
+          const margin = clampMin0(toNum($("margin").value));
+
+          const usableW = clampMin0(roofW - 2 * margin);
+          const usableH = clampMin0(roofH - 2 * margin);
+
+          const landscape = gridFit(usableW, usableH, panelW, panelH, gap);
+          const portrait = gridFit(usableW, usableH, panelH, panelW, gap);
+
+          const mixedFromLandscape = mixedHeuristic(usableW, usableH, panelW, panelH, gap);
+          const mixedFromPortrait = mixedHeuristic(usableW, usableH, panelH, panelW, gap);
+
+          // Pick best
+          let best = {
+            label: "Landscape",
+            count: landscape.count,
+            kind: "grid",
+            rectW: panelW,
+            rectH: panelH,
+            data: landscape
+          };
+
+          function considerGrid(label, rectW, rectH, data) {
+            if (data.count > best.count) {
+              best = { label, count: data.count, kind: "grid", rectW, rectH, data };
+            }
+          }
+          function considerMixed(label, data) {
+            if (data.total > best.count) {
+              best = { label, count: data.total, kind: "mixed", data };
+            }
+          }
+
+          considerGrid("Portrait", panelH, panelW, portrait);
+          considerMixed("Mixed (main landscape)", mixedFromLandscape);
+          considerMixed("Mixed (main portrait)", mixedFromPortrait);
+
+          return {
+            roofW, roofH, panelW, panelH, gap, margin, usableW, usableH,
+            landscape, portrait, mixedFromLandscape, mixedFromPortrait,
+            best
+          };
+        }
+
+        // ---- Controller ----
+        function run() {
+          const model = compute();
+          renderResults(model);
+          drawPreview(model);
+          $("lastRun").textContent = `Last run: ${new Date().toLocaleString()}`;
+        }
+
+        // Debounced auto-calc
+        let t = null;
+        function runDebounced() {
+          clearTimeout(t);
+          t = setTimeout(run, 180);
+        }
+
+        // ---- Events ----
+        $("btnCalc").addEventListener("click", run);
+
+        $("btnSwap").addEventListener("click", () => {
+          const w = $("roofW").value;
+          $("roofW").value = $("roofH").value;
+          $("roofH").value = w;
+          run();
+        });
+
+        ["roofW","roofH","panelW","panelH","gap","margin"].forEach((id) => {
+          $(id).addEventListener("input", runDebounced);
+          $(id).addEventListener("change", runDebounced);
+        });
+
+        // Initial compute
+        run();
+      })();
+    </script>
+  </body>
+</html>
