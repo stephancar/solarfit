@@ -3,8 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Roof Panel Fit — steefware-style</title>
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="SolarFit" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>SolarFit — steefware.com</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -12,6 +17,14 @@
       name="description"
       content="Deterministic roof panel fit calculator (landscape/portrait/mixed). Clean, fast, predictable."
     />
+    <style>
+      html, body { height: 100%; }
+      body {
+        padding: env(safe-area-inset-top) env(safe-area-inset-right)
+                 env(safe-area-inset-bottom) env(safe-area-inset-left);
+        -webkit-tap-highlight-color: transparent;
+      }
+    </style>
   </head>
 
   <body class="bg-white text-black antialiased">
@@ -19,7 +32,7 @@
       <!-- Header -->
       <header class="flex items-center justify-between py-6">
         <a
-          href="#"
+          href="https://steefware.com"
           class="inline-flex items-center gap-2 rounded-xl border-2 border-black px-3 py-2 text-sm font-black tracking-tight shadow-[4px_4px_0_0_#000] transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:translate-x-0.5 focus:outline-none focus-visible:ring-4 focus-visible:ring-black focus-visible:ring-offset-4 focus-visible:ring-offset-white"
           aria-label="steefware home"
         >
